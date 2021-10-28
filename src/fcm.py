@@ -58,19 +58,14 @@ class FCM:
                 # clear first char of context
                 context = context[1:]
         
-        print(self.prob_table)        
+        # replace occurences with the probabilities
+        self.calc_probabilities()
+
 
     def in_memory_limit(self) -> bool:
         # verifies situations in which Memory Usage will be higher than 8GB
         mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
         return mem <= 0.2
-
-    def calc_probabilities(self) -> None:
-        if self.is_hash_table:
-            pass
-        else:
-            pass 
-
 
     def add_occur_to_table(self, context):
         prefix = context[:-1]
@@ -86,6 +81,25 @@ class FCM:
             context_index += self.symbol_dict[prefix[self.k-i]] * self.alphabet_size**(i-1)
         
         self.prob_table[context_index][self.symbol_dict[next_char]] += 1
+
+    
+    def calc_probabilities(self) -> None:
+        if self.is_hash_table:
+            for context, next_occur_chars in self.prob_table.items():
+                total_row_occur = sum(next_occur_chars.values())
+                if context == "88":
+                    print(self.prob_table["88"])
+                    print(total_row_occur)
+                for next_char, num_occur in next_occur_chars.items():
+                    self.prob_table[context][next_char] = \
+                        (num_occur + self.alpha) \
+                        / (total_row_occur + self.alpha * self.alphabet_size)
+                if context == "88":
+                    print(self.alphabet_size)
+                    print(self.prob_table["88"])
+        else:
+            pass 
+
 
     def calc_entropy(self):
         #Calculates the events probabilities in the FCM, the entropies for each context/row and the final entropy of the model.
