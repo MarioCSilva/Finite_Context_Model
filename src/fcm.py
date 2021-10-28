@@ -10,7 +10,7 @@ class FCM:
         self.k = k
         self.alpha = alpha
         self.filename = filename
-        self.symbol_dict = defaultdict(int)
+        self.alphabet = {}
         self.prob_table = []
         self.is_hash_table = False
         self.total_occurrences = 0
@@ -25,115 +25,107 @@ class FCM:
             for char in line:
                 # non-aplhabetical count
                 # Lower upper case
-                if not self.symbol_dict[char]:
-                    self.symbol_dict[char] = ind_counter
+                if char not in self.alphabet:
+                    self.alphabet[char] = ind_counter
                     ind_counter += 1
 
         # store size of alphabet
         self.alphabet_size = ind_counter
 
-
         # memory formula
         if self.in_memory_limit():
-            self.prob_table = [[0] * self.alphabet_size for _ in range(self.alphabet_size** self.k)]
+            self.prob_table = [[0] * (self.alphabet_size+1) for _ in range(self.alphabet_size ** self.k)]
         else:
             self.prob_table = defaultdict(lambda: defaultdict(int))
             self.is_hash_table = True
 
-        context = ""
+        sequence = ""
 
         file_text = open(self.filename,"r")
         for line in file_text:
             for char in line:
                 # We should only use sequences of size k
-                context += char
-
-                if len(context) % (self.k+1) != 0:
+                if len(sequence) % (self.k) != 0:
                     continue
 
                 # add to occurrences table one more occurency of this char sequence
-                self.add_occur_to_table(context)
+                self.add_occur_to_table(sequence, char)
                 self.total_occurrences += 1
 
-                # clear first char of context
-                context = context[1:]
+                # clear first char of context and add next_char
+                sequence = sequence[1:] + char
+
         
         # replace occurrences with the probabilities
         self.calc_probabilities()
 
-
+    
     def in_memory_limit(self) -> bool:
         # verifies situations in which Memory Usage will be higher than 8GB
         mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
-        return mem <= 8
+        return mem <= 0.2
 
-    def add_occur_to_table(self, context):
-        prefix = context[:-1]
-        next_char = context[-1]
+
+    def get_context_index(self, context):
+        context_index = 0
+
+        for i in range(self.k, 0, -1):
+            context_index += self.alphabet[context[self.k-i]] * self.alphabet_size**(i-1)
         
+        return context_index
+
+
+    def add_occur_to_table(self, context, next_char):
         if self.is_hash_table:
-            self.prob_table[prefix][next_char] += 1
+            self.prob_table[context][next_char] += 1
+            self.prob_table[context]["total_oc"] += 1
             return
 
-        context_index = 0
-        
-        for i in range(self.k, 0, -1):
-            context_index += self.symbol_dict[prefix[self.k-i]] * self.alphabet_size**(i-1)
-        
-        self.prob_table[context_index][self.symbol_dict[next_char]] += 1
+        context_index = self.get_context_index(context)
+        self.prob_table[context_index][self.alphabet[next_char]] += 1
+        self.prob_table[context_index][-1] += 1
 
-    
+
     def calc_probabilities(self) -> None:
         if self.is_hash_table:
             for context, next_occur_chars in self.prob_table.items():
-                total_row_occur = sum(next_occur_chars.values())
+                total_row_occur = self.prob_table[context]["total_oc"]
+
+                divisor = total_row_occur + self.alpha * self.alphabet_size
+                
                 for next_char, num_occur in next_occur_chars.items():
-                    self.prob_table[context][next_char] = \
-                        (num_occur + self.alpha) \
-                        / (total_row_occur + self.alpha * self.alphabet_size)
+                    self.prob_table[context][next_char] = (num_occur + self.alpha) / divisor
         else:
             for context_row in self.prob_table:
-                total_row_occur = sum(context_row)
-                for i in range(len(context_row)):
-                    context_row[i] = \
-                        (context_row[i] + self.alpha) \
-                        / (total_row_occur + self.alpha * self.alphabet_size)
+                total_row_occur = context_row[-1]
+
+                divisor = total_row_occur + self.alpha * self.alphabet_size
+
+                for i in range(self.alphabet_size-1):
+                    context_row[i] = (context_row[i] + self.alpha) / divisor
 
 
-    def calc_entropy(self):
-        #Calculates the events probabilities in the FCM, the entropies for each context/row and the final entropy of the model.
-        
-        self.probs = self.dic_model # new dictionary with the same keys that dic_model, at the end this data structure will save the events probabilities
+    def get_context_probabilities(self, context):
+        context_index = self.get_context_index(context)
 
-        total = 0  
-        total_rows = {}
-        # for each context we calculate its total of occurences and we increment this to the total 
-        for context in self.dic_model.keys(): 
-            total_rows[context] = sum(self.dic_model[context].values()) 
-            total += total_rows[context]
+        if self.is_hash_table:
+            final_probs = [0] * self.alphabet_size
 
-        for context in self.dic_model:
-            context_entropy = 0 
-            row_total = total_rows[context]
+            total_row_occur = self.prob_table[context]['total_occur']
+            divisor = total_row_occur + self.alpha * self.alphabet_size
 
-            # calculate the events probabilities and context entropy
-            for char in self.dic_model[context]:
-                p_char = (self.dic_model[context][char] + self.alpha) / (row_total + self.alpha * self.cardinality)
-                self.probs[context][char] = p_char 
-                context_entropy += p_char * math.log2(p_char)
+            for symbol, index in self.alphabet.items():
+                prob = self.prob_table[context][symbol]
+
+                if prob:
+                    final_probs[index] = prob
+                else:
+                    final_probs[index] = self.alpha / divisor
             
-            # deal with zeros at lines, if alpha equals 0, zeros don't matter
-            if self.alpha > 0:
-                dif = self.cardinality - len(self.dic_model[context].values())
-                if dif != 0: # if dif differs to 0 this line have zeros
-                    p_char = self.alpha / (row_total + self.alpha * self.cardinality) # calculate the probability 
-                    context_entropy += dif * (p_char * math.log2(p_char)) # add the previoust value to context entropy n (dif) times
-
-            context_probability = row_total/total  # calculate context probability 
-            self.entropy += context_probability * context_entropy   # increase the final entropy
-
-        self.entropy = -self.entropy
+            return final_probs
+        else:
+            return self.prob_table[context_index][:-1]
 
 
-fcm = FCM(k=2,alpha=0.001)
-fcm.read_file()
+#fcm = FCM(k=2,alpha=0.001)
+#fcm.read_file()
