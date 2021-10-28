@@ -34,7 +34,7 @@ class FCM:
 
 
         # memory formula
-        if self.has_memory_limit():
+        if self.in_memory_limit():
             self.prob_table = [[0] * self.alphabet_size for _ in range(self.alphabet_size** self.k)]
         else:
             self.prob_table = defaultdict(lambda: defaultdict(int))
@@ -57,14 +57,13 @@ class FCM:
 
                 # clear first char of context
                 context = context[1:]
+        
+        print(self.prob_table)        
 
-        print(self.prob_table.keys())
-
-
-    def has_memory_limit(self) -> bool:
+    def in_memory_limit(self) -> bool:
         # verifies situations in which Memory Usage will be higher than 8GB
-        mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16 /8/1024/1024
-        return mem >= 8388608
+        mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
+        return mem <= 0.2
 
     def calc_probabilities(self) -> None:
         if self.is_hash_table:
@@ -79,14 +78,13 @@ class FCM:
         
         if self.is_hash_table:
             self.prob_table[prefix][next_char] += 1
-            print( self.prob_table)
             return
 
         context_index = 0
         
         for i in range(self.k, 0, -1):
-            context_index += self.symbol_dict[context[self.k-i]] * self.alphabet_size**(i-1)
-         
+            context_index += self.symbol_dict[prefix[self.k-i]] * self.alphabet_size**(i-1)
+        
         self.prob_table[context_index][self.symbol_dict[next_char]] += 1
 
     def calc_entropy(self):
