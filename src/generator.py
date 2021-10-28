@@ -29,6 +29,6 @@ class Generator:
         return generated_text
 
 
-gen = Generator(k=1, alpha=0.001)
+gen = Generator(k=2, alpha=1)
 text = gen.generate()
 print(text)

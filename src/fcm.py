@@ -39,31 +39,30 @@ class FCM:
             self.prob_table = defaultdict(lambda: defaultdict(int))
             self.is_hash_table = True
 
-        sequence = ""
+        context = ""
 
         file_text = open(self.filename,"r")
         for line in file_text:
             for char in line:
                 # We should only use sequences of size k
-                if len(sequence) % (self.k) != 0:
+                if len(context) == (self.k):
+                    # add to occurrences table one more occurency of this char for the given context
+                    self.add_occur_to_table(context, char)
+                    self.total_occurrences += 1
+                    # clear first char of context and add next_char
+                    context = context[1:] + char
                     continue
+                context += char
 
-                # add to occurrences table one more occurency of this char sequence
-                self.add_occur_to_table(sequence, char)
-                self.total_occurrences += 1
-
-                # clear first char of context and add next_char
-                sequence = sequence[1:] + char
-
-        
         # replace occurrences with the probabilities
         self.calc_probabilities()
 
     
     def in_memory_limit(self) -> bool:
+        # TODO:
         # verifies situations in which Memory Usage will be higher than 8GB
         mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
-        return mem <= 0.2
+        return mem <= 8
 
 
     def get_context_index(self, context):
