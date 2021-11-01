@@ -113,14 +113,15 @@ class FCM:
                 for next_char, num_occur in next_occur_chars.items():
                     if next_char != "total_occur":
                         self.prob_table[context][next_char] = (num_occur + self.alpha) / divisor
-        else:
-            for context_row in self.prob_table:
-                total_row_occur = context_row[-1]
+            return
 
-                divisor = total_row_occur + self.alpha * self.alphabet_size
+        for context_row in self.prob_table:
+            total_row_occur = context_row[-1]
 
-                for i in range(self.alphabet_size):
-                    context_row[i] = (context_row[i] + self.alpha) / divisor
+            divisor = total_row_occur + self.alpha * self.alphabet_size
+
+            for i in range(self.alphabet_size):
+                context_row[i] = (context_row[i] + self.alpha) / divisor
 
 
     def get_context_probabilities(self, context):
@@ -153,6 +154,7 @@ class FCM:
                     context_entropy -= prob_char * log2(prob_char)
 
                 self.entropy += context_entropy * context_probability
+            return
 
         for context_row in self.prob_table:
             # context has no occurrences

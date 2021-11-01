@@ -37,7 +37,7 @@ class Main:
 
         arg_parser.add_argument('-f', nargs=1, default=[FILENAME])
         arg_parser.add_argument('-k', nargs=1, type=int, default=[3])
-        arg_parser.add_argument('-a', nargs=1, type=int, default=[0.1])
+        arg_parser.add_argument('-a', nargs=1, type=float, default=[0.1])
         arg_parser.add_argument('-g', action="store_true", default=False)
         arg_parser.add_argument('-t', nargs=1, type=int, default=[10000])
 
