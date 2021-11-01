@@ -1,10 +1,9 @@
 from collections import defaultdict
 from math import log2
-
 FILENAME = "./../example/example.txt"
 
 class FCM:
-    def __init__(self, k, alpha, filename=FILENAME) -> None:
+    def __init__(self, k=3, alpha=0.1, filename=FILENAME) -> None:
         assert alpha > 0, "Values of alpha must be greater than zero"
 
         self.k = k
@@ -17,6 +16,21 @@ class FCM:
         self.is_hash_table = False
         self.total_occurrences = 0
         self.entropy = 0
+
+        # get alphabet and store characters' indexes
+        self.read_file()
+
+        # initialize table that stores occurencies
+        self.setup_table()
+
+        # set occurencies on the table
+        self.set_occurences()
+
+        # replace the occurrences with the calculated probabilities
+        self.calc_probabilities()
+
+        # calculate entropy
+        self.calc_entropy()
 
 
     def read_file(self):
@@ -35,6 +49,8 @@ class FCM:
         # store size of alphabet
         self.alphabet_size = ind_counter
 
+
+    def setup_table(self):
         # memory formula
         if self.in_memory_limit():
             self.prob_table = [[0] * (self.alphabet_size+1) for _ in range(self.alphabet_size ** self.k)]
@@ -42,6 +58,8 @@ class FCM:
             self.prob_table = defaultdict(lambda: defaultdict(int))
             self.is_hash_table = True
 
+
+    def set_occurences(self):
         context = ""
 
         file_text = open(self.filename,"r")
@@ -55,15 +73,12 @@ class FCM:
                     context = context[1:] + char
                     continue
                 context += char
-        # replace occurrences with the probabilities
-        self.calc_probabilities()
 
-    
+
     def in_memory_limit(self) -> bool:
-        # TODO:
-        # verifies situations in which Memory Usage will be higher than 1GB
+        # verifies situations in which Memory Usage will be higher than 0.5 GB
         mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
-        return mem <= 1000
+        return mem <= 500
 
 
     def get_context_index(self, context):
@@ -139,8 +154,6 @@ class FCM:
 
                 self.entropy += context_entropy * context_probability
 
-            return self.entropy
-
         for context_row in self.prob_table:
             # context has no occurrences
             if context_row[-1] == 0:
@@ -154,11 +167,3 @@ class FCM:
             context_probability = context_row[-1] / self.total_occurrences
 
             self.entropy += context_entropy * context_probability
-
-
-        return self.entropy
-
-
-fcm = FCM(k=2, alpha=0.001)
-fcm.read_file()
-print(fcm.calc_entropy())

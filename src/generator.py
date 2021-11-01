@@ -3,10 +3,10 @@ from random import randint, choices, choice
 FILENAME = "./../example/example.txt"
 
 class Generator:
-    def __init__(self, k, alpha, filename=FILENAME, text_size=10000) -> None:
-        self.fcm = FCM(k=k, alpha=alpha, filename=filename)
+    def __init__(self, text_size=10000, fcm=None) -> None:
+        self.fcm = fcm
         self.text_size = text_size
-        self.fcm.read_file()
+
 
     def generate(self) -> str:
         alphabet = list(self.fcm.alphabet.keys())
@@ -27,8 +27,3 @@ class Generator:
             generated_text += predicted_symbol
 
         return generated_text
-
-
-gen = Generator(k=3, alpha=0.00000000001)
-text = gen.generate()
-print(text)
