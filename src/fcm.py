@@ -5,26 +5,33 @@ FILENAME = "./../example/example.txt"
 class FCM:
     def __init__(self, k=3, alpha=0.1, filename=FILENAME) -> None:
         assert alpha > 0, "Values of alpha must be greater than zero"
+        assert k > 0, "Values of k must be greater than zero"
 
         self.k = k
         self.alpha = alpha
         self.filename = filename
 
         self.alphabet = {}
-        self.prob_table = []
+        self.alphabet_size = 0
 
+        self.prob_table = []
         self.is_hash_table = False
+
         self.total_occurrences = 0
+        
         self.entropy = 0
 
+
+
+    def run(self):
         # get alphabet and store characters' indexes
         self.read_file()
 
         # initialize table that stores occurencies
         self.setup_table()
 
-        # set occurencies on the table
-        self.set_occurences()
+        # set occurrences on the table
+        self.set_occurrences()
 
         # replace the occurrences with the calculated probabilities
         self.calc_probabilities()
@@ -59,7 +66,7 @@ class FCM:
             self.is_hash_table = True
 
 
-    def set_occurences(self):
+    def set_occurrences(self):
         context = ""
 
         file_text = open(self.filename,"r")

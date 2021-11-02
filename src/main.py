@@ -10,7 +10,7 @@ class Main:
         if self.text_size:
             self.generator = Generator(self.text_size, self.fcm)
         
-        self.fcm.read_file()
+        self.fcm.run()
 
         self.get_results()
 

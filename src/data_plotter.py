@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
-import os
 from collections import defaultdict
+from fcm import FCM
+from copy import deepcopy
 
 class Data_Plotter:
     def __init__(self):
@@ -23,18 +24,35 @@ class Data_Plotter:
         self.plot_results()
 
 
-    def get_entropy(self, k, a):
-        return float(os.popen(f"python3 main.py -k {k} -a {a}").readlines()[-1].split(':')[-1].strip())
+    def get_entropy(self, fcm_for_k, k, a):
+        fcm = FCM(k, a)
+
+        fcm.prob_table = deepcopy(fcm_for_k.prob_table)
+        fcm.total_occurrences = fcm_for_k.total_occurrences
+        fcm.alphabet = deepcopy(fcm_for_k.alphabet)
+        fcm.alphabet_size = fcm_for_k.alphabet_size
+        fcm.is_hash_table = fcm_for_k.is_hash_table
+
+        fcm.calc_probabilities()
+
+        fcm.calc_entropy()
+
+        return fcm.entropy
 
 
     def calc_entropies(self):
         for k in self.k_values:
+            fcm_for_k = FCM(k, 1)
+            fcm_for_k.read_file()
+            fcm_for_k.setup_table()
+            fcm_for_k.set_occurrences()
+
             for a in self.a_values:
-                result = self.get_entropy(k, a)
+                result = self.get_entropy(fcm_for_k, k, a)
 
                 self.results[k][a] = result
-                
-                print(f"k = {k:<5} a = {a:<10} entropy = {result:0.3f}")
+
+                print(f"k = {k:<5} a = {a:<10} entropy = {result}")
 
 
     def plot_results(self):
