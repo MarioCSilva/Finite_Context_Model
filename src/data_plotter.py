@@ -24,20 +24,15 @@ class Data_Plotter:
         self.plot_results()
 
 
-    def get_entropy(self, fcm_for_k, k, a):
-        fcm = FCM(k, a)
+    def get_entropy(self, fcm_for_k, occur_table, a):
+        fcm_for_k.prob_table = deepcopy(occur_table)
+        fcm_for_k.entropy = 0
+        fcm_for_k.alpha = a
 
-        fcm.prob_table = deepcopy(fcm_for_k.prob_table)
-        fcm.total_occurrences = fcm_for_k.total_occurrences
-        fcm.alphabet = deepcopy(fcm_for_k.alphabet)
-        fcm.alphabet_size = fcm_for_k.alphabet_size
-        fcm.is_hash_table = fcm_for_k.is_hash_table
+        fcm_for_k.calc_probabilities()
+        fcm_for_k.calc_entropy()
 
-        fcm.calc_probabilities()
-
-        fcm.calc_entropy()
-
-        return fcm.entropy
+        return fcm_for_k.entropy
 
 
     def calc_entropies(self):
@@ -46,9 +41,10 @@ class Data_Plotter:
             fcm_for_k.read_file()
             fcm_for_k.setup_table()
             fcm_for_k.set_occurrences()
+            occur_table = deepcopy(fcm_for_k.prob_table)
 
             for a in self.a_values:
-                result = self.get_entropy(fcm_for_k, k, a)
+                result = self.get_entropy(fcm_for_k, occur_table, a)
 
                 self.results[k][a] = result
 
