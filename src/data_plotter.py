@@ -54,8 +54,10 @@ class Data_Plotter:
     def plot_results(self):
         color_arr = ['b', 'g', 'c', 'm', 'y', 'brown'] 
         plt.rcParams['figure.constrained_layout.use'] = True
+        plt.rcParams.update({'font.size': 16})
+
         fig, ax = plt.subplots(len(self.a_values)//2, 2,figsize=(len(self.a_values)+10,10))
-        fig2, ax2 = plt.subplots(figsize=(4,4))
+        fig2, ax2 = plt.subplots(figsize=(8,8))
 
         num_plots = 0
         for a in self.a_values:
@@ -92,7 +94,7 @@ class Data_Plotter:
         plt.show()
 
         fig, ax = plt.subplots(len(self.a_values)//2, 2,figsize=(len(self.a_values)+10,10))
-        fig2, ax2 = plt.subplots(figsize=(4,4))
+        fig2, ax2 = plt.subplots(figsize=(8, 8))
 
         num_plots = 0
         for k in self.k_values:
