@@ -7,21 +7,22 @@ class Main:
     def __init__(self) -> None:
         self.fcm = FCM(*self.check_arguments())
 
+        self.fcm.run()
+
         if self.text_size:
             self.generator = Generator(self.text_size, self.fcm)
-        
-        self.fcm.run()
+            self.generator.generate()
 
         self.get_results()
 
 
     def get_results(self) -> None:
-        print(f"FCM with k={self.fcm.k}, alpha: {self.fcm.alpha}")
-        print(f"Entropy of data set: {self.fcm.entropy}")
-
         if self.text_size:
-            print(f"\nGenerated text with size {self.text_size}:")
-            print(self.generator.generate())
+            print(f"\nGenerated text with size: {self.text_size}:")
+            print(self.generator.generated_text)
+            print(f"\nEntropy of generated text: {self.generator.get_entropy()}")
+        print(f"FCM with k={self.fcm.k}, alpha: {self.fcm.alpha}, text size: {self.fcm.total_occurrences}")
+        print(f"Entropy of data set: {self.fcm.entropy}")
 
 
     def usage(self):
