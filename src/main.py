@@ -1,6 +1,7 @@
 import argparse
 from fcm import FCM
 from generator import Generator
+import sys
 FILENAME = "./../example/example.txt"
 
 class Main:
@@ -18,9 +19,8 @@ class Main:
 
     def get_results(self) -> None:
         if self.text_size:
-            print(f"\nGenerated text with size: {self.text_size}:")
             print(self.generator.generated_text)
-            print(f"\nEntropy of generated text: {self.generator.get_entropy()}")
+            print(f"\nEntropy of generated text: {self.generator.get_entropy()}, text size: {self.text_size}")
         print(f"FCM with k={self.fcm.k}, alpha: {self.fcm.alpha}, text size: {self.fcm.total_occurrences}")
         print(f"Entropy of data set: {self.fcm.entropy}")
 
@@ -41,8 +41,12 @@ class Main:
         arg_parser.add_argument('-a', nargs=1, type=float, default=[0.1])
         arg_parser.add_argument('-g', action="store_true", default=False)
         arg_parser.add_argument('-t', nargs=1, type=int, default=[10000])
-
-        args = arg_parser.parse_args()
+        args = None
+        try:
+            args = arg_parser.parse_args()
+        except:
+            self.usage()
+            sys.exit(0)
         file_name = args.f[0]
         k = args.k[0]
         alpha = args.a[0]

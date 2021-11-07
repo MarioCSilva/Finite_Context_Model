@@ -1,5 +1,6 @@
 from collections import defaultdict
 from math import log2
+import sys
 FILENAME = "./../example/example.txt"
 
 class FCM:
@@ -41,7 +42,11 @@ class FCM:
 
 
     def read_file(self):
-        file_text = open(self.filename,"r")
+        try:
+            file_text = open(self.filename,"r")
+        except FileNotFoundError:
+            print(f"Could not Open file {self.filename}")
+            sys.exit(0)
 
         # get alphet and store indexes
         ind_counter = 0
@@ -83,9 +88,9 @@ class FCM:
 
 
     def in_memory_limit(self) -> bool:
-        # verifies situations in which Memory Usage will be higher than 0.5 GB
+        # verifies situations in which Memory Usage will be higher than 0.5 MB
         mem = (self.alphabet_size ** self.k ) * self.alphabet_size * 16/8/1024/1024
-        return mem <= 500
+        return mem <= 0.5
 
 
     def get_context_index(self, context):
@@ -150,29 +155,37 @@ class FCM:
 
 
     def calc_entropy(self):
+        alpha_x_alphabet_size = self.alpha * self.alphabet_size
+        total_possible_seq = self.alphabet_size ** (self.k + 1)
+        total_occ_alpha = self.total_occurrences + self.alpha * total_possible_seq
+
         if self.is_hash_table:
+            num_non_occ_seq = self.alphabet_size ** self.k - len(self.prob_table)
+
             for context in self.prob_table.keys():
                 context_entropy = 0
 
-                context_probability = self.prob_table[context]["total_occur"] \
-                    / self.total_occurrences
+                context_probability = (self.prob_table[context]["total_occur"] + alpha_x_alphabet_size)\
+                    / total_occ_alpha
 
                 for prob_char in self.get_context_probabilities(context):
                     context_entropy -= prob_char * log2(prob_char)
 
-                self.entropy += context_entropy * context_probability
+                self.entropy += context_entropy * context_probability    
+
+            if num_non_occ_seq:
+                prob_char = self.alpha / alpha_x_alphabet_size
+                context_entropy = -prob_char * log2(prob_char) * self.alphabet_size
+                context_probability = alpha_x_alphabet_size / total_occ_alpha
+                self.entropy += context_entropy * context_probability * num_non_occ_seq
             return
-
         for context_row in self.prob_table:
-            # context has no occurrences
-            if context_row[-1] == 0:
-                continue
-
             context_entropy = 0
 
             for i in range(self.alphabet_size):
                 context_entropy -= context_row[i] * log2(context_row[i])
 
-            context_probability = context_row[-1] / self.total_occurrences
+            context_probability = (context_row[-1] + alpha_x_alphabet_size)\
+                    / total_occ_alpha
 
             self.entropy += context_entropy * context_probability
